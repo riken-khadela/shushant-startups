@@ -1,0 +1,7 @@
+env
+etc
+newstartups/settings.py
+updatestartups/update_settings.py
+config.json
+main_startups.zip
+*.log
