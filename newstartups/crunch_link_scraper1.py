@@ -5,7 +5,15 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 from datetime import date, timedelta
-import random, json
+import random, json, urllib
+ 
+CONFIG_FILE = "/home/user1/startups/shushant-startups/newstartups/config.json"
+
+with open(CONFIG_FILE, "r") as f: config = json.load(f)
+    
+TOKEN = config["token_1"]
+COOKIE_FILE = "session_data.json"
+OUTPUT_DIR = "results"
 
 # Define a function to get the html content of search results from Google 
 # for a particular search query and page number
@@ -33,17 +41,26 @@ def get_request(search, page):
             
             #Google request to get html body of the search
             queryParameters = {"q": str(search), "start": page}
+            
+            url = f"https://www.google.com/search?q={urllib.parse.quote_plus(search)}"
+            url = f"http://api.scrape.do/?token={TOKEN}&url={url}&render=true"
+            res = requests.get(url)
+            # https://www.google.com/search?q=loreal+site%3Awww.crunchbase.com%2Forganization%2F&oq=lo&gs_lcrp=EgZjaHJvbWUqCAgAEEUYJxg7MggIABBFGCcYOzIMCAEQABhDGIAEGIoFMgYIAhBFGDkyBggDEEUYPDIGCAQQRRg8MgYIBRBFGDwyBggGEEUYPDIGCAcQRRg80gEIMTAzOWowajeoAgCwAgA&sourceid=chrome&ie=UTF-8
+            
+            
             # res = requests.get("https://www.google.com/search", params=queryParameters, headers=getHeaders, timeout=20,proxies=proxies)
-            res = requests.get("https://www.google.com/search", params=queryParameters, headers=getHeaders, timeout=20)
+            # res = requests.get("https://www.google.com/search", params=queryParameters, headers=getHeaders, timeout=20)
+            print(res.status_code)
+            
             if res.status_code== 200:
                 #Return Response with status True
                 return True, res
+            
             print(res.status_code)
             
         except Exception as e:
-            pass
+            print(e)
         time.sleep(0.1)
-        breakpoint()
         print("Retrying again for:" + str(search))
         
     return False, False
@@ -91,6 +108,7 @@ def collect_links_and_store(res, key,search,page):
                     obj['index'] = index_url
                     obj['google_page'] = current_page
                     obj['count'] = 1
+                    obj['update_first'] = 1
                     insert_links.append(obj)
                     print(href)
     except Exception as e:
@@ -110,7 +128,6 @@ def collect_page_details():
     m = random.randrange(2,10)
     time.sleep(m)
     keywords = cf.read_crunch_keywords()
-    
     # For each keyword, search for links across multiple pages of Google search results
     for key in keywords:
         page = 0
@@ -142,39 +159,35 @@ def collect_page_details():
                     break
             else:
                 break
-        #cf.update_read_stat_keywords(key)
-        
 
 
-#collect_page_details()
-
-if __name__ == "__main__":
-    try:
-        file_path = os.path.dirname(os.path.realpath(__file__))
-        filename = os.path.join(file_path, "crunchlink_status1.txt")
-        f = open(filename, 'r')
-        txt = f.read()
-        f.close()
-        if str(txt) == "0":
-            f = open(filename, 'w')
-            f.write("1")
-            f.close()
-            try:
-                separator_line =  '-' * 40
-                print(separator_line)
-                print("            Starting Scraper1           ")
-                print(separator_line)
-                collect_page_details()
-                print(separator_line)
-                print("            Stopping Scraper1           ")
-                print(separator_line)
-            except Exception as e:
-                print(e)
-                pass
-            f = open(filename, 'w')
-            f.write("0")
-            f.close()
-        else:
-            print("***** Another process is already running *****")
-    except Exception as e:
-        print(f"Error before running the script: {e}")
+# if __name__ == "__main__":
+#     try:
+#         file_path = os.path.dirname(os.path.realpath(__file__))
+#         filename = os.path.join(file_path, "crunchlink_status1.txt")
+#         f = open(filename, 'r')
+#         txt = f.read()
+#         f.close()
+#         if str(txt) == "0":
+#             f = open(filename, 'w')
+#             f.write("1")
+#             f.close()
+#             try:
+#                 separator_line =  '-' * 40
+#                 print(separator_line)
+#                 print("            Starting Scraper1           ")
+#                 print(separator_line)
+#                 collect_page_details()
+#                 print(separator_line)
+#                 print("            Stopping Scraper1           ")
+#                 print(separator_line)
+#             except Exception as e:
+#                 print(e)
+#                 pass
+#             f = open(filename, 'w')
+#             f.write("0")
+#             f.close()
+#         else:
+#             print("***** Another process is already running *****")
+#     except Exception as e:
+#         print(f"Error before running the script: {e}")

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 CONFIG_FILE = "/home/user1/startups/config.json"
 COOKIE_FILE = "/home/user1/startups/shushant-startups/session_data.json"
 CHECK_INTERVAL = 60  
-REFRESH_INTERVAL = 15  
+REFRESH_INTERVAL = 25  
 
 with open(CONFIG_FILE, "r") as f:
     config = json.load(f)
@@ -17,11 +17,15 @@ def generate_session_id():
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=7))
 
 def refresh_session():
+    time.sleep(random.randint(1,9))
+    
     with open(COOKIE_FILE, "r") as f: data = json.load(f)
     if data['updatting'] == True :
         return
     
     data['updatting'] = True
+    data['status_update'] = False
+    
     with open(COOKIE_FILE, "w") as f: json.dump(data, f, indent=2)
     print("session is updatting")
     
@@ -40,6 +44,7 @@ def refresh_session():
 
     response = requests.get(login_url)
     cookies = response.headers.get("Scrape.do-Cookies", "")
+
     
     data["session_id"] = session_id
     data["cookies"] = cookies
@@ -66,14 +71,14 @@ def needs_refresh():
         print(f"[!] Error parsing session file: {e}")
         return True
 
-# Main loop: check every 1 minute
-print("[*] Starting session refresher...")
+# # Main loop: check every 1 minute
+# print("[*] Starting session refresher...")
 # refresh_session()
-while True:
-    needs_refres = needs_refresh()
-    print(needs_refres)
-    if needs_refres:
-        refresh_session()
-    else:
-        print("[*] Session still valid. Next check in 60s.")
-    time.sleep(CHECK_INTERVAL)
+# while True:
+#     needs_refres = needs_refresh()
+#     print(needs_refres)
+#     if needs_refres:
+#         refresh_session()
+#     else:
+#         print("[*] Session still valid. Next check in 60s.")
+#     time.sleep(CHECK_INTERVAL)

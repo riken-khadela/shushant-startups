@@ -78,56 +78,58 @@ class NEWS(object):
 
         #     # Update the table with the combined data
         #     full_table= combined_table
-        all_news = information.find_all('div',{'class':'list-item'})
-        news_list = []
-        news_title_list = []
-        for news in  all_news:
-            tmp = {}
-            date = news.find('span',{'class':'date-header'}).text.strip()
-            date = ','.join(date.split(',')[1:]).strip()
-            
-            news_source = news.find_all('div', {'class': 'content-block'})
-            for news_inside in news_source :
-                news_source_tag = news_inside.find('div', {'class': 'article-details'})
-                news_anchor_tag = news_inside.find('a', {'class': 'accent'})
-
-                if not news_source_tag or not news_anchor_tag:
-                    continue
-
-                news_source = news_source_tag.text.replace(date, '').strip()
-                news_title = news_anchor_tag.text.strip()
-                news_link = news_anchor_tag.get('href')
-
-                if news_link and news_title and news_source and date:
-                    tmp['date'] = date
-                    tmp['label'] = news_title
-                    tmp['link'] = news_link
-                    tmp['category'] = "News"
-
-                if tmp:
-                    news_title_list.append(news_title)
-                    news_list.append(tmp)
+        try :
+            all_news = information.find_all('div',{'class':'list-item'})
+            news_list = []
+            news_title_list = []
+            for news in  all_news:
+                tmp = {}
+                date = news.find('span',{'class':'date-header'}).text.strip()
+                date = ','.join(date.split(',')[1:]).strip()
                 
-        full_table_news_title = [ value['label'] for key, value in full_table.items()]
-        new_appendable_news = [i for i in news_list if i['label'] not in full_table_news_title]
-        if new_appendable_news :
-            next_start_number = len(full_table)
-            for new_appendable in new_appendable_news :
-                next_start_number += 1
-                full_table[next_start_number] = new_appendable
-        
-        unique_news = {}
-        seen_titles = set()
-        new_key = 0
+                news_source = news.find_all('div', {'class': 'content-block'})
+                for news_inside in news_source :
+                    news_source_tag = news_inside.find('div', {'class': 'article-details'})
+                    news_anchor_tag = news_inside.find('a', {'class': 'accent'})
 
-        for _, item in full_table.items():
-            label = item.get('label')
-            if label and label not in seen_titles:
-                seen_titles.add(label)
-                unique_news[new_key] = item
-                new_key += 1
+                    if not news_source_tag or not news_anchor_tag:
+                        continue
 
-        full_table = unique_news
+                    news_source = news_source_tag.text.replace(date, '').strip()
+                    news_title = news_anchor_tag.text.strip()
+                    news_link = news_anchor_tag.get('href')
+
+                    if news_link and news_title and news_source and date:
+                        tmp['date'] = date
+                        tmp['label'] = news_title
+                        tmp['link'] = news_link
+                        tmp['category'] = "News"
+
+                    if tmp:
+                        news_title_list.append(news_title)
+                        news_list.append(tmp)
+                    
+            full_table_news_title = [ value['label'] for key, value in full_table.items()]
+            new_appendable_news = [i for i in news_list if i['label'] not in full_table_news_title]
+            if new_appendable_news :
+                next_start_number = len(full_table)
+                for new_appendable in new_appendable_news :
+                    next_start_number += 1
+                    full_table[str(next_start_number)] = new_appendable
+            
+            unique_news = {}
+            seen_titles = set()
+            new_key = 0
+
+            for _, item in full_table.items():
+                label = item.get('label')
+                if label and label not in seen_titles:
+                    seen_titles.add(label)
+                    unique_news[str(new_key)] = item
+                    new_key += 1
+
+            full_table = unique_news
+        except Exception as e: print(f"ERROR in News news_section : {e}")
     
         
         return full_table
@@ -135,34 +137,38 @@ class NEWS(object):
     def news_process_logic(self, url,dict):
        
         old_dict = dict.get('news', {})
+        self.News = {
+            "news" : {}
+        }
+        try :
+            news_detail = {}
+            search_url = url+'/timeline'
+            session_id, cookies = cf.load_session()
+            is_loaded, res = cf.get_scrpido_requests(url, session_id, cookies)
             
-        news_detail = {}
-        search_url = url+'/timeline'
-        session_id, cookies = cf.load_session()
-        is_loaded, res = cf.get_scrpido_requests(url, session_id, cookies)
-        
-        unique_news = {}
-        seen_titles = []
-        new_key = 0
-        
-        if is_loaded:
-            #  removedublicates
-            for _, item in old_dict.items(): 
-                label = item.get('label')
-                if label and label not in seen_titles:
-                    seen_titles.append(label)
-                    unique_news[new_key] = item
-                    new_key += 1
-
-            old_dict = unique_news
+            unique_news = {}
+            seen_titles = []
+            new_key = 0
             
-            data = BeautifulSoup(res.text, 'lxml')
-            sections = data.find('news-detailed-list' )
-            self.News = self.news_section(sections, data,old_dict)
+            if is_loaded:
+                #  removedublicates
+                for _, item in old_dict.items(): 
+                    label = item.get('label')
+                    if label and label not in seen_titles:
+                        seen_titles.append(label)
+                        unique_news[str(new_key)] = item
+                        new_key += 1
 
-            news_detail = {
-                "news": self.News
-            }
+                old_dict = unique_news
+                
+                data = BeautifulSoup(res.text, 'lxml')
+                sections = data.find('news-detailed-list' )
+                self.News = self.news_section(sections, data,old_dict)
+
+                news_detail = {
+                    "news": self.News
+                }
+        except Exception as e: print(f"ERROR in News news_process_logic : {e}")
         
         return news_detail
 

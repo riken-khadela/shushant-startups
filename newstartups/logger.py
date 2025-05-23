@@ -4,7 +4,7 @@ import os
 import time
 
 class CustomLogger:
-    def __init__(self, log_file_path='/home/rk/Downloads/newstartups 5/newstartups 4/updatestartups/log/update_detail_scraper.log'):
+    def __init__(self, log_file_path='/home/user1/startups/shushant-startups/newstartups/log/detail_scraper.py.log'):
         self.log_file_path = log_file_path
         self.setup_logger()
 
